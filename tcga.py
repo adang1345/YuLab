@@ -5,7 +5,8 @@ Data include all publicly-available simple nucleotide variation information on t
 files are available at https://wiki.nci.nih.gov/display/TCGA/Mutation+Annotation+Format+(MAF)+Specification
 
 Only the following mutation types are extracted: "Missense_Mutation", "Silent", "Frame_Shift_Del", "In_Frame_Del",
-"Frame_Shift_Ins", "In_Frame_Ins".
+"Frame_Shift_Ins", "In_Frame_Ins". Extracted data are non-repetitive. Two mutations are collapsed to a single entry if
+they refer to the same change in amino acid.
 """
 
 import os
@@ -15,27 +16,32 @@ mutation_types = ("Missense_Mutation", "Silent", "Frame_Shift_Del", "In_Frame_De
                   "In_Frame_Ins")
 raw_files = os.listdir("../Mutation Data/TCGA")
 fwrite = open("TCGAMutationData.txt", "w")
-fwrite.write("GeneName\tUniProtID\tMutation\tMutationType\n")
+fwrite.write("GeneName\tUniProtID\tProteinMutation\tMutationType\n")
 
-for curr_mutation in mutation_types:
-    for filename in raw_files:
-        tcga_data = open("../Mutation Data/TCGA/" + filename)
-        next(tcga_data)
-        next(tcga_data)  # skip first 2 lines
+prev_mutations = set()
+write_data = []
+for filename in raw_files:
+    tcga_data = open("../Mutation Data/TCGA/" + filename)
+    next(tcga_data)
+    next(tcga_data)  # skip first 2 lines
 
-        for line in tcga_data:
-            line = line.rstrip("\n").split("\t")
-            mutation_type = line[8]
-            if mutation_type != curr_mutation:  # go to next mutation if we're not looking for this one currently
-                continue
-            gene_name = line[60]
-            uniprot_id = line[67]
-            mutation = line[36][2:]
-            new_data = [gene_name, uniprot_id, mutation, mutation_type]
-            for x in range(len(new_data)):
-                if not new_data[x]:
-                    new_data[x] = "None"
-            fwrite.write("\t".join(new_data) + "\n")
-        print("Finished " + filename + " for " + curr_mutation)
+    for line in tcga_data:
+        line = line.rstrip("\n").split("\t")
+        mutation_type = line[8]
+        gene_name = line[60]
+        mutation = line[36][2:]
+        if mutation_type not in mutation_types or (gene_name, mutation) in prev_mutations:
+            # go to next mutation if we're not considering this one
+            continue
+        prev_mutations.add((gene_name, mutation))
+        uniprot_id = line[67]
+        new_data = [gene_name, uniprot_id, mutation, mutation_type]
+        for x in range(len(new_data)):
+            if not new_data[x]:
+                new_data[x] = "None"
+        write_data.append(new_data)
 
+write_data.sort(key=lambda x: x[3])  # sort data by mutation type
+for line in write_data:
+    fwrite.write("\t".join(line) + "\n")
 fwrite.close()
