@@ -12,3 +12,4 @@ files = set(os.listdir("../Disordered Region Data/MobiDB"))
 for x in ids:
     if (x + "_mobidb.json" not in files) or (x + "_pfam.json" not in files) or (x + "_disorder.json" not in files):
         print(x)
+print("Q00535_mobidb.json" in files)

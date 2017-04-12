@@ -99,7 +99,7 @@ for prot in os.listdir("../Disordered Region Data/DisProt"):
 
 # Organize MobiDB data. Not all predicted regions are used for each predictor; only the long disorder predicted
 # consensus and experimental consensus data are considered. Additionally, some of the data I downloaded include entries
-# that are not yet available in the current version (2.0) of MobiDB. These entries are ignored.
+# that are not yet available in the current version (2.2) of MobiDB. These entries are ignored.
 with open("mobidb_human_ids.txt") as ids_file:
     ids = ids_file.read().split()
 
@@ -110,6 +110,7 @@ for prot in ids:
     if "error" in j_disorder:
         # If file containing disorder information has an error, then go onto next protein. This means that the
         # database has not been updated to contain detailed information about this protein.
+        print(prot)
         continue
     with io.open("../Disordered Region Data/MobiDB/"+prot+"_mobidb.json", "r", encoding='utf8') as f:
         text = f.read()

@@ -70,17 +70,18 @@ for line in cosmic_data:
         gene_name = gene_name[:gene_name.index("_")]
     mutation_type = line[19]
     protein_mutation = line[18][2:]
-    if mutation_type not in relevant_mutations or (gene_name, protein_mutation) in prev_mutations or "?" in protein_mutation:
-        # If this mutation has an unwanted type or if it has been encountered before, then ignore it.
-        continue
-    # invariant: this mutation has not been previously encountered
-    prev_mutations.add((gene_name, protein_mutation))
-    mutation_type = mutation_type_convert[mutation_type]
-    mutation_id = line[16]
     try:
         uniprot_id = cosmic_to_uniprot[gene_name]
     except KeyError:
         uniprot_id = "-"
+    if (mutation_type not in relevant_mutations or (uniprot_id, protein_mutation) in prev_mutations
+        or "?" in protein_mutation or uniprot_id == "-"):
+        # If this mutation has an unwanted type, has been encountered before, or has unknown UniProt ID, then ignore it.
+        continue
+    # invariant: this mutation has not been previously encountered
+    prev_mutations.add((uniprot_id, protein_mutation))
+    mutation_type = mutation_type_convert[mutation_type]
+    mutation_id = line[16]
     new_data = [gene_name, uniprot_id, mutation_id, protein_mutation, mutation_type, source]
     for x in range(len(new_data)):
         if not new_data[x]:
@@ -103,12 +104,13 @@ for filename in raw_files:
         mutation_type = line[8]
         gene_name = line[60]
         protein_mutation = line[36][2:]
-        if mutation_type not in relevant_mutations or (gene_name, protein_mutation) in prev_mutations or "?" in protein_mutation:
-            # go to next mutation if we're not considering this one
-            continue
-        prev_mutations.add((gene_name, protein_mutation))
-        mutation_type = mutation_type_convert[mutation_type]
         uniprot_id = line[67]
+        if (mutation_type not in relevant_mutations or (uniprot_id, protein_mutation) in prev_mutations
+            or "?" in protein_mutation or not uniprot_id):
+            # If this mutation has an unwanted type, has been encountered before, or has unknown UniProt ID, then ignore it.
+            continue
+        prev_mutations.add((uniprot_id, protein_mutation))
+        mutation_type = mutation_type_convert[mutation_type]
         new_data = [gene_name, uniprot_id, mutation_id, protein_mutation, mutation_type, source]
         for x in range(len(new_data)):
             if not new_data[x]:

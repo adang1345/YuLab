@@ -1,18 +1,12 @@
-with open("TCGAMutationData.txt") as tcga_file:
-    next(tcga_file)
-    tcga_data = set()
-    for line in tcga_file:
-        line_data = line.split("\t")
-        tcga_data.add((line_data[0], line_data[2]))
-    print("TCGA Unique entries: " + str(len(tcga_data)))
+def range_to_set2(r):
+    """Given a string r similar to the form "a;b-c", return the set {a, b, b+1, ... , c-1, c}"""
+    r = [x.split("-") for x in r.split(";")]
+    s = set()
+    for x in r:
+        if len(x) == 1:
+            s.add(int(x[0]))
+        else:
+            s.update(list(range(int(x[0]), int(x[1])+1)))
+    return s
 
-# with open("CosmicMutationData.txt") as cosmic_file:
-#     next(cosmic_file)
-#     cosmic_data = set()
-#     for line in cosmic_file:
-#         line_data = line.split("\t")
-#         line_data = line_data[2]
-#         if line_data in cosmic_data:
-#             print(line, end="")
-#         cosmic_data.add(line_data)
-#     print("COSMIC Unique entries: " + str(len(cosmic_data)))
+print(range_to_set2("1-12;19-21;65"))
