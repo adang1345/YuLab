@@ -1,5 +1,5 @@
 """Count the number of cancer missense mutations from TCGA and COSMIC that are in disordered interface regions or in
-non-disordered interface regions. Also count the number of residues in disordered and structured regions for all
+structured interface regions. Also count the number of residues in disordered and structured regions for all
 proteins for which there is at least one mutation, disorder data are available, and interface data are available."""
 
 
@@ -51,7 +51,7 @@ with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
         xl = x.split()
-        if xl[0] != "Source":
+        if xl[0] != "Source" and xl[0] == "DisProt":
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
@@ -71,6 +71,7 @@ with open("../Mutation Data/CancerMutationData.txt") as mutf:
 # count number of mutations in each category
 in_disordered_interface = 0
 in_structured_interface = 0
+mut_uniprot = set()
 for x in mutdata:
     uniprot = x[1]
     try:
@@ -82,17 +83,19 @@ for x in mutdata:
             in_disordered_interface += 1
         else:
             in_structured_interface += 1
-mut_uniprot = {x[1] for x in mutdata}
+    mut_uniprot.add(uniprot)
 
 # count total number of residues in each category
 disordered_interface_size = 0
 structured_interface_size = 0
 total_interface_size = 0
+total_protein_count = 0
 for x in uniprot_interface:
-    if x in uniprot_disorder:
+    if x in uniprot_disorder and x in mut_uniprot:
         disordered_interface_size += len(uniprot_interface[x].intersection(uniprot_disorder[x]))
         structured_interface_size += len(uniprot_interface[x].difference(uniprot_disorder[x]))
         total_interface_size += len(uniprot_interface[x])
+        total_protein_count += 1
 
 print("Cancer mutations in disordered interface: " + str(in_disordered_interface))
 print("Cancer mutations in structured interface: " + str(in_structured_interface))
@@ -100,3 +103,4 @@ print("Total cancer mutations: " + str(in_disordered_interface + in_structured_i
 print("Disordered interface total # of residues: " + str(disordered_interface_size))
 print("Structured interface total # of residues: " + str(structured_interface_size))
 print("Total interface # of residues: " + str(total_interface_size))
+print("Total number of proteins considered: " + str(total_protein_count))
