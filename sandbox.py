@@ -1,12 +1,10 @@
-def range_to_set2(r):
-    """Given a string r similar to the form "a;b-c", return the set {a, b, b+1, ... , c-1, c}"""
-    r = [x.split("-") for x in r.split(";")]
-    s = set()
-    for x in r:
-        if len(x) == 1:
-            s.add(int(x[0]))
-        else:
-            s.update(list(range(int(x[0]), int(x[1])+1)))
-    return s
+import io
 
-print(range_to_set2("1-12;19-21;65"))
+with io.open("../Mutation Data/HGMD/HGMD_substitutions_2015.3.tsv",encoding="utf8") as mut_file:
+    mut_data = set()
+    for x in mut_file.readlines():
+        xs = x.split("\t")
+        if xs[1] == "DM" and xs[7] != "\\N":
+            if xs[7] in mut_data:
+                print(xs[7])
+            mut_data.add(xs[7])
