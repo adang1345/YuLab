@@ -1,5 +1,5 @@
-"""It seems that mutation_control1.py downloaded nearly all the data but is missing a few files. This script determines which
-files are missing."""
+"""It seems that mutation_control1.py downloaded nearly all the data but is missing a few files. This script determines
+which files are missing."""
 
 import os
 
@@ -10,5 +10,5 @@ ids_file.close()
 
 files = set(os.listdir("../Mutation Control/UniProt/"))
 for x in ids:
-    if (x + ".xml") not in files:
+    if (x + ".fasta") not in files:
         print(x)

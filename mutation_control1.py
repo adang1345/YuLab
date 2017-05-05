@@ -1,5 +1,4 @@
-"""Download natural variant mutation data from UniProt. Natural variants are not necessarily disease-associated and
-are a collection of mutations that are found in nature."""
+"""Download FASTA sequences from UniProt."""
 
 from urllib.request import urlopen
 from urllib.error import HTTPError, URLError
@@ -12,7 +11,7 @@ import io
 
 print(datetime.datetime.now())
 
-num_threads = 200
+num_threads = 100
 
 # obtain IDs of proteins to query
 ids_file = open("uniprot_human_ids.txt")
@@ -25,8 +24,8 @@ def query(a, b):
     i = a
     while i < b:
         try:
-            uniprot_data = urlopen("http://www.uniprot.org/uniprot/" + ids[i] + ".xml").read().decode("utf-8")
-            with io.open("../Mutation Control/UniProt/" + ids[i] + ".xml", "w", encoding="utf8") as uniprot_file:
+            uniprot_data = urlopen("http://www.uniprot.org/uniprot/" + ids[i] + ".fasta").read().decode("utf-8")
+            with io.open("../Mutation Control/UniProt/" + ids[i] + ".fasta", "w", encoding="utf8") as uniprot_file:
                 uniprot_file.write(uniprot_data)
             i += 1
         except (HTTPError, URLError, ConnectionResetError, IncompleteRead, TimeoutError):

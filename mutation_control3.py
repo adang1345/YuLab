@@ -1,59 +1,74 @@
-"""Generate a document organizing the UniProt control missense mutations."""
+"""nondisease.xml contains mutations obtained from dbSNP that are labeled as "Benign" or "Likely Benign". Extract these
+mutations and select only the ones that can be mapped to UniProt protein positions using refseq2uniprot.txt.
 
-import os
+Currently, my solution is to take the RefSeq ID of a mutation and map it to a UniProt ID. Due to the complication that
+the RefSeq ID might pertain to a protein that is not the canonical isoform in UniProt, I check whether the 
+"""
+
+#  TODO finish control mutation extraction and comments
+
+# map from 3-letter abbreviation to 1-letter abbreviation
+amino_acid_abbrev = {'Cys':'C', 'Asp':'D', 'Ser':'S', 'Gln':'Q', 'Lys':'K', 'Ile':'I', 'Pro':'P', 'Thr':'T', 'Phe':'F',
+                     'Asn':'N', 'Gly':'G', 'His':'H', 'Leu':'L', 'Arg':'R', 'Trp':'W', 'Ala':'A', 'Val':'V', 'Glu':'E',
+                     'Tyr':'Y', 'Met':'M'}
 
 
-def find_missense_mutations(xml):
-    """Given an xml string containing UniProt data, return a list of tuples consisting of a mutation ID and a protein
-    missense mutation similar to the form T342Y."""
-    seq_variant_start = xml.find('<feature type="sequence variant"')
-    seq_variant_end = xml.find("</feature>", seq_variant_start)
-    mutations = []
-    mutations_set = set()
-    while seq_variant_start != -1:
+def mutation_abbrev(m):
+    """Given mutation m as a string that has 3-letter amino acid abbreviations, return the mutation using 1-letter
+    amino acid abbreviations. Example: "Ser180Asn" becomes "S180N"."""
+    start_position = -1
+    end_position = -1
+    for x in range(len(m)):
+        if m[x].isdigit() and start_position == -1:
+            start_position = x
+        elif start_position != -1 and end_position == -1 and not m[x].isdigit():
+            end_position = x
+            break
+    return amino_acid_abbrev[m[:start_position]] + m[start_position: end_position] + amino_acid_abbrev[m[end_position:]]
+
+
+# make set of (RefSeq, protein mutation) tuples extracted from dbSNP
+nondisease_mutation_file = open("../Mutation Control/dbSNP/nondisease.xml")
+refseqid_mutation = set()
+for line in nondisease_mutation_file:
+    mutation_start = line.index(":p.") + len(":p.")
+    refseqid_start = mutation_start
+    while line[refseqid_start] != ">":  # RefSeq ID starts at the closest > sign left of mutation
+        refseqid_start -= 1
+        if refseqid_start == 0:
+            raise IndexError("Entrez ID not found")
+    refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
+    mutation_end = line.index("</hgvs>", mutation_start)
+    try:
+        refseqid_mutation.add((refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
+    except KeyError:  # skip this mutation if there's unknown information
+        pass
+    while True:
         try:
-            # get the mutation id
-            id_start = xml.index('id="', seq_variant_start, seq_variant_end) + len('id="')
-            id_end = xml.index('"', id_start, seq_variant_end)
-            mutation_id = xml[id_start: id_end]
-
-            # get the original amino acid
-            original_start = xml.index("<original>", id_end, seq_variant_end) + len("<original>")
-            original_end = xml.index("</original>", original_start, seq_variant_end)
-            original_amino_acid = xml[original_start: original_end]
-
-            # get the new amino acid
-            new_start = xml.index("<variation>", original_end, seq_variant_end) + len("<variation>")
-            new_end = xml.index("</variation>", new_start, seq_variant_end)
-            new_amino_acid = xml[new_start: new_end]
-
-            if len(original_amino_acid) == len(new_amino_acid) == 1:  # consider only single amino acid changes
-                # get the position
-                position_start = xml.index('<position position="', new_end, seq_variant_end) + len('<position position="')
-                position_end = xml.index('"/>', position_start, seq_variant_end)
-                position = xml[position_start: position_end]
-                mutation = original_amino_acid + position + new_amino_acid
-                if mutation not in mutations_set:
-                    mutations.append((mutation_id, mutation))
-                    mutations_set.add(mutation)
-        except ValueError:  # skip this mutation if data are incomplete
-            pass
-        seq_variant_start = xml.find('<feature type="sequence variant"', seq_variant_end)
-        seq_variant_end = xml.find("</feature>", seq_variant_start)
-    return mutations
+            mutation_start = line.index(":p.", mutation_end) + len(":p.")
+            refseqid_start = mutation_start
+            while line[refseqid_start] != ">":
+                refseqid_start -= 1
+                if refseqid_start == 0:
+                    raise IndexError("Entrez ID not found")
+            refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
+            mutation_end = line.index("</hgvs>", mutation_start)
+            refseqid_mutation.add((refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
+        except (ValueError, KeyError):
+            break
+nondisease_mutation_file.close()
 
 
-fwrite = open("MutationControl.txt", "w")
-fwrite.write("GeneName\tUniProtID\tMutationID\tProteinMutation\tMutationType\tSource\n")
-gene_name = "-"
-mutation_type = "Missense"
-source = "UniProt"
-for file in os.listdir("../Mutation Control/UniProt/"):
-    with open("../Mutation Control/UniProt/" + file) as f:
-        xml = f.read()
-    uniprot = file[:file.index(".")]
-    for m in find_missense_mutations(xml):
-        mutation_id = m[0]
-        protein_mutation = m[1]
-        fwrite.write("\t".join((gene_name, uniprot, mutation_id, protein_mutation, mutation_type, source)) + "\n")
-fwrite.close()
+print("Total number of mutations: " + str(len(refseqid_mutation)))
+
+
+mapping_file = open("../Mutation Control/dbSNP/uniprot_human2refP1may17.txt")
+entrezids = set()
+for line in mapping_file:
+    entrezids.update(line.split()[1].split(";"))
+
+c = 0
+for x in refseqid_mutation:
+    if x[0] in entrezids:
+        c += 1
+print(c)
