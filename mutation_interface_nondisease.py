@@ -51,7 +51,7 @@ with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
         xl = x.split()
-        if xl[0] != "Source" and xl[0] == "DisProt":
+        if xl[0] != "Source" and xl[0] == "DisProt":#xl[7] == "Exp":#
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
@@ -61,7 +61,7 @@ for x in ddata:
 
 # read control mutation data and consider only missense mutations for proteins that show up in the interface data and
 # the disorder data
-with open("../Mutation Control/MutationControl.txt") as mutf:
+with open("../Mutation Control/MutationControlNeutral.txt") as mutf:
     mutdata = []
     for x in mutf.readlines():
         xl = x.split()

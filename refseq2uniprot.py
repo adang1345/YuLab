@@ -1,4 +1,4 @@
-"""Read nondisease mutations from dbSNP and construct a file containing a list of RefSeq protein IDs."""
+"""Read mutation XML files from dbSNP and construct a file containing a list of RefSeq protein IDs."""
 
 # map from 3-letter abbreviation to 1-letter abbreviation
 amino_acid_abbrev = {'Cys':'C', 'Asp':'D', 'Ser':'S', 'Gln':'Q', 'Lys':'K', 'Ile':'I', 'Pro':'P', 'Thr':'T', 'Phe':'F',
@@ -21,10 +21,14 @@ def mutation_abbrev(m):
 
 
 # make set of RefSeqIDs extracted from dbSNP
-nondisease_mutation_file = open("../Mutation Control/dbSNP/nondisease.xml")
+mutation_file = open("../Mutation Control/dbSNP/neutral.xml")
 refseqids = set()
-for line in nondisease_mutation_file:
-    mutation_start = line.index(":p.")
+for line in mutation_file:
+    try:
+        mutation_start = line.index(":p.")
+    except ValueError:  # if this mutation has no associated protein information, print it to check for bugs
+        print("Failed to find mutation: " + line, end="")
+        continue
     refseqid_start = mutation_start
     while line[refseqid_start] != ">":  # RefSeq ID starts at the closest > sign left of mutation
         refseqid_start -= 1
@@ -46,7 +50,7 @@ for line in nondisease_mutation_file:
                 refseqids.add(refseqid)
         except (ValueError, KeyError):
             break
-nondisease_mutation_file.close()
+mutation_file.close()
 
 print("Number of RefSeq IDs: " + str(len(refseqids)))
 

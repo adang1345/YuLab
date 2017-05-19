@@ -1,13 +1,13 @@
-"""neutral.xml contains all missense SNP mutations obtained from dbSNP. Extract these
+"""nonpathogenic.xml contains mutations obtained from dbSNP that are labeled as "Benign", "Likely Benign", "Other",
+"Uncertain Significance", and "Untested". Extract these
 mutations and select only the ones that can be mapped to UniProt protein positions using refseq2uniprot.txt.
 
 Currently, my solution is to take the RefSeq ID of a mutation and map it to a UniProt ID. If a single RefSeq ID maps to
 more than one UniProt ID, then I pick a UniProt ID arbitrarily. Due to the complication that the RefSeq ID might pertain
 to a protein that is not the canonical isoform in UniProt, I then check whether the original amino acid specified in the
 mutation matches that in the canonical sequence from UniProt. If not, I discard this mutation. This filtering method
-has an error rate of about 1.8%.
+has an error rate of about 2.5%.
 """
-
 
 # map from 3-letter abbreviation to 1-letter abbreviation
 amino_acid_abbrev = {'Cys':'C', 'Asp':'D', 'Ser':'S', 'Gln':'Q', 'Lys':'K', 'Ile':'I', 'Pro':'P', 'Thr':'T', 'Phe':'F',
@@ -29,7 +29,41 @@ def mutation_abbrev(m):
     return amino_acid_abbrev[m[:start_position]] + m[start_position: end_position] + amino_acid_abbrev[m[end_position:]]
 
 
-print("Constructing map from RefSeq to UniProt")
+# make set of (rsID, RefSeq, protein mutation) tuples extracted from dbSNP
+nonpathogenic_mutation_file = open("../Mutation Control/dbSNP/nonpathogenic.xml")
+rsid_refseqid_mutation = set()
+for line in nonpathogenic_mutation_file:
+    rsid_start = line.index('<Rs rsId="') + len('<Rs rsId="')
+    rsid_end = line.index('"', rsid_start)
+    rsid = "rs" + line[rsid_start: rsid_end]
+    mutation_start = line.index(":p.") + len(":p.")
+    refseqid_start = mutation_start
+    while line[refseqid_start] != ">":  # RefSeq ID starts at the closest > sign left of mutation
+        refseqid_start -= 1
+        if refseqid_start == 0:
+            raise IndexError("Entrez ID not found")
+    refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
+    mutation_end = line.index("</hgvs>", mutation_start)
+    try:
+        rsid_refseqid_mutation.add((rsid, refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
+    except KeyError:  # skip this mutation if there's unknown information
+        pass
+    while True:
+        try:
+            mutation_start = line.index(":p.", mutation_end) + len(":p.")
+            refseqid_start = mutation_start
+            while line[refseqid_start] != ">":
+                refseqid_start -= 1
+                if refseqid_start == 0:
+                    raise IndexError("Entrez ID not found")
+            refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
+            mutation_end = line.index("</hgvs>", mutation_start)
+            rsid_refseqid_mutation.add((rsid, refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
+        except (ValueError, KeyError):
+            break
+    # break
+nonpathogenic_mutation_file.close()
+
 
 # Construct map from RefSeq ID to UniProt
 refseq_uniprot = {}
@@ -41,48 +75,6 @@ with open("../Mutation Control/dbSNP/refseq2uniprot.txt") as refseq2uniprot_file
         for x in refseqids:
             refseq_uniprot[x] = uniprot
 
-print("\tDone")
-print("Extracting mutation information from dbSNP")
-
-# make set of (rsID, RefSeq, protein mutation) tuples extracted from dbSNP for which there exists a mapping to UniProt
-mutation_file = open("../Mutation Control/dbSNP/neutral.xml")
-rsid_refseqid_mutation = set()
-for line in mutation_file:
-    rsid_start = line.index('<Rs rsId="') + len('<Rs rsId="')
-    rsid_end = line.index('"', rsid_start)
-    rsid = "rs" + line[rsid_start: rsid_end]
-    mutation_start = line.index(":p.") + len(":p.")
-    refseqid_start = mutation_start
-    while line[refseqid_start] != ">":  # RefSeq ID starts at the closest > sign left of mutation
-        refseqid_start -= 1
-        if refseqid_start == 0:
-            raise IndexError("RefSeq ID not found")
-    refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
-    mutation_end = line.index("</hgvs>", mutation_start)
-    try:
-        if refseqid in refseq_uniprot:
-            rsid_refseqid_mutation.add((rsid, refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
-    except KeyError:  # skip this mutation if there's unknown information
-        pass
-    while True:
-        try:
-            mutation_start = line.index(":p.", mutation_end) + len(":p.")
-            refseqid_start = mutation_start
-            while line[refseqid_start] != ">":
-                refseqid_start -= 1
-                if refseqid_start == 0:
-                    raise IndexError("RefSeq ID not found")
-            refseqid = line[refseqid_start + 1: mutation_start - len(":p.")]
-            mutation_end = line.index("</hgvs>", mutation_start)
-            if refseqid in refseq_uniprot:
-                rsid_refseqid_mutation.add((rsid, refseqid, mutation_abbrev(line[mutation_start: mutation_end])))
-        except (ValueError, KeyError):
-            break
-    # break
-mutation_file.close()
-
-print("\tDone")
-print("Constructing map from UniProt to protein sequence")
 
 # Of the UniProt IDs that exist in the RefSeq-to-UniProt mapping, construct a mapping from UniProt ID to protein
 # sequence in FASTA format without the header, preceded by a ">". The reason for having a character inserted in front of
@@ -97,14 +89,10 @@ for uniprot in refseq_uniprot.values():
     except FileNotFoundError:
         pass
 
-print("\tDone")
-print("Filtering mutations against UniProt sequences")
 
 # Add UniProt information to each mutation and filter out the mutations that do not map to canonical sequences.
 uniprot_rsid_refseqid_mutation = set()
 uniprot_mutation = set()  # keep set of (UniProt ID, mutation) tuples to protect against repeats
-valid = 0
-invalid = 0  # keep count of valid and invalid mutations
 for m in rsid_refseqid_mutation:
     refseqid = m[1]
     mutation = m[2]
@@ -115,16 +103,10 @@ for m in rsid_refseqid_mutation:
         continue
     mutation_original = mutation[0]
     mutation_position = int(mutation[1:-1])
-    if mutation_position < len(seq) and seq[mutation_position] == mutation_original:
-        valid += 1
-        if (uniprot, mutation) not in uniprot_mutation:
-            uniprot_rsid_refseqid_mutation.add((uniprot, m[0], refseqid, mutation))
-    else:
-        invalid += 1
+    if (mutation_position < len(seq) and seq[mutation_position] == mutation_original
+        and (uniprot, mutation) not in uniprot_mutation):
+        uniprot_rsid_refseqid_mutation.add((uniprot, m[0], refseqid, mutation))
     uniprot_mutation.add((uniprot, mutation))
-
-print("\tDone")
-print("Writing data file")
 
 # convert data set into a list and sort by UniProt ID
 uniprot_rsid_refseqid_mutation = list(uniprot_rsid_refseqid_mutation)
@@ -134,7 +116,7 @@ uniprot_rsid_refseqid_mutation.sort(key=lambda x: x[0])
 gene_name = "-"
 mutation_type = "Missense"
 source = "dbSNP"
-fwrite = open("../Mutation Control/MutationControlNeutral.txt", "w")
+fwrite = open("../Mutation Control/MutationControlNonpathogenic.txt", "w")
 fwrite.write("GeneName\tUniProtID\tMutationID\tProteinMutation\tMutationType\tSource\n")
 for m in uniprot_rsid_refseqid_mutation:
     uniprot_id = m[0]
@@ -142,8 +124,3 @@ for m in uniprot_rsid_refseqid_mutation:
     protein_mutation = m[3]
     fwrite.write("\t".join((gene_name, uniprot_id, mutation_id, protein_mutation, mutation_type, source)) + "\n")
 fwrite.close()
-
-print("\tDone")
-
-print("Valid Mutation Count\t" + str(valid))
-print("Invalid Mutation Count\t" + str(invalid))

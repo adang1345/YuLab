@@ -97,10 +97,10 @@ for x in uniprot_interface:
         total_interface_size += len(uniprot_interface[x])
         total_protein_count += 1
 
-print("Cancer mutations in disordered interface: " + str(in_disordered_interface))
-print("Cancer mutations in structured interface: " + str(in_structured_interface))
-print("Total cancer mutations: " + str(in_disordered_interface + in_structured_interface))
-print("Disordered interface total # of residues: " + str(disordered_interface_size))
-print("Structured interface total # of residues: " + str(structured_interface_size))
-print("Total interface # of residues: " + str(total_interface_size))
-print("Total number of proteins considered: " + str(total_protein_count))
+print("Cancer mutations in disordered interface\t" + str(in_disordered_interface))
+print("Cancer mutations in structured interface\t" + str(in_structured_interface))
+# print("Total cancer mutations\t" + str(in_disordered_interface + in_structured_interface))
+print("Disordered interface total # of residues\t" + str(disordered_interface_size))
+print("Structured interface total # of residues\t" + str(structured_interface_size))
+# print("Total interface # of residues\t" + str(total_interface_size))
+print("Total number of proteins considered\t" + str(total_protein_count))
