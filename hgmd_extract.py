@@ -1,6 +1,5 @@
-"""Extract substitution disease mutations from HGMD. Include only those with DM in the Variant_class column. Do not
-include those with DM? in the Variant_class column. Include only those for which there exists a mapping from HGMD to
-UniProt ID without any errors or warnings.
+"""Extract substitution disease mutations from HGMD. Include only those that do not have "R" in the Variant_class
+column. Include only those for which there exists a mapping from HGMD to UniProt ID without any errors or warnings.
 
 Data extracted are non-repetitive at the protein level."""
 
@@ -28,7 +27,7 @@ with io.open("../Mutation Data/HGMD/HGMD_substitutions_2015.3.tsv", encoding="ut
             continue
         uniprotid = hgmd2uniprot[protein_mutation]
         mutationid = xs[2]
-        if xs[1] == "DM" and protein_mutation != "\\N" and protein_mutation not in already_seen:
+        if xs[1] != "R" and protein_mutation != "\\N" and protein_mutation not in already_seen:
             protein_mutation2 = protein_mutation.split(":")[1][2:]
             fwrite.write("\t".join((gene_name, uniprotid, mutationid, protein_mutation2)) + "\n")
         already_seen.add(protein_mutation)

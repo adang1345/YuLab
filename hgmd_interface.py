@@ -4,18 +4,6 @@ proteins for which there is at least one mutation, disorder data are available, 
 
 
 def range_to_set(r):
-    """Given a string r similar to the form "[a,b-c]", return the set {a, b, b+1, ... , c-1, c}"""
-    r = [x.split("-") for x in r[1:-1].split(",")]
-    s = set()
-    for x in r:
-        if len(x) == 1:
-            s.add(int(x[0]))
-        else:
-            s.update(list(range(int(x[0]), int(x[1])+1)))
-    return s
-
-
-def range_to_set2(r):
     """Given a string r similar to the form "a;b-c", return the set {a, b, b+1, ... , c-1, c}"""
     r = [x.split("-") for x in r.split(";")]
     s = set()
@@ -37,27 +25,27 @@ for x in idata:
     iregion_a = x[3]
     iregion_b = x[5]
     if uniprotid_a in uniprot_interface:
-        uniprot_interface[uniprotid_a].update(range_to_set2(iregion_a))
+        uniprot_interface[uniprotid_a].update(range_to_set(iregion_a))
     else:
-        uniprot_interface[uniprotid_a] = range_to_set2(iregion_a)
+        uniprot_interface[uniprotid_a] = range_to_set(iregion_a)
     if uniprotid_b in uniprot_interface:
-        uniprot_interface[uniprotid_b].update(range_to_set2(iregion_b))
+        uniprot_interface[uniprotid_b].update(range_to_set(iregion_b))
     else:
-        uniprot_interface[uniprotid_b] = range_to_set2(iregion_b)
+        uniprot_interface[uniprotid_b] = range_to_set(iregion_b)
 
 # Read disorder region data file and construct mapping from UniProt ID to set containing locations of disordered
 # regions. Include experimental and predicted data.
 with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
-        xl = x.split()
-        if xl[0] != "Source":  # and xl[7] == "Exp":# and xl[0] == "DisProt":
+        xl = x.rstrip().split("\t")
+        if xl[0] != "Source" and xl[0] == "DisProt":
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
     uniprot = x[1]
     dregion = x[5]
-    uniprot_disorder[uniprot] = range_to_set2(dregion)
+    uniprot_disorder[uniprot] = range_to_set(dregion)
 
 # read mutation data and consider only mutations for proteins that show up in the interface data and
 # the disorder data

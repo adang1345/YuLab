@@ -38,8 +38,8 @@ for x in idata:
 with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
-        xl = x.split()
-        if xl[0] != "Source" and xl[0] == "DisProt":
+        xl = x.rstrip().split("\t")
+        if xl[0] != "Source" and xl[7] == "Exp" and xl[0] == "DisProt":
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
