@@ -4,18 +4,6 @@ proteins for which there is at least one mutation, disorder data are available, 
 
 
 def range_to_set(r):
-    """Given a string r similar to the form "[a,b-c]", return the set {a, b, b+1, ... , c-1, c}"""
-    r = [x.split("-") for x in r[1:-1].split(",")]
-    s = set()
-    for x in r:
-        if len(x) == 1:
-            s.add(int(x[0]))
-        else:
-            s.update(list(range(int(x[0]), int(x[1])+1)))
-    return s
-
-
-def range_to_set2(r):
     """Given a string r similar to the form "a;b-c", return the set {a, b, b+1, ... , c-1, c}"""
     r = [x.split("-") for x in r.split(";")]
     s = set()
@@ -27,15 +15,15 @@ def range_to_set2(r):
     return s
 
 
-# read interface data file and construct mapping from UniProt ID to set containing locations of interface regions
-with open("../Interface Data/ires_perppi_humanonly.txt") as idataf:
+# read interface data file and construct mapping from UniProt ID to set containing locations of interface domains
+with open("../Interface Data/hSIN_organized.txt") as idataf:
     idata = [x.split() for x in idataf.readlines() if x[:8] != "UniProtA"]
 uniprot_interface = {}
 for x in idata:
     uniprotid_a = x[0]
     uniprotid_b = x[1]
-    iregion_a = x[6]
-    iregion_b = x[7]
+    iregion_a = x[3]
+    iregion_b = x[5]
     if uniprotid_a in uniprot_interface:
         uniprot_interface[uniprotid_a].update(range_to_set(iregion_a))
     else:
@@ -51,13 +39,13 @@ with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
         xl = x.split()
-        if xl[0] != "Source" and xl[0] == "DisProt":
+        if xl[0] != "Source":# and xl[7] == "Exp":#xl[0] == "DisProt":
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
     uniprot = x[1]
     dregion = x[5]
-    uniprot_disorder[uniprot] = range_to_set2(dregion)
+    uniprot_disorder[uniprot] = range_to_set(dregion)
 
 # read cancer mutation data and consider only missense mutations for proteins that show up in the interface data and
 # the disorder data
@@ -99,8 +87,6 @@ for x in uniprot_interface:
 
 print("Cancer mutations in disordered interface\t" + str(in_disordered_interface))
 print("Cancer mutations in structured interface\t" + str(in_structured_interface))
-# print("Total cancer mutations\t" + str(in_disordered_interface + in_structured_interface))
 print("Disordered interface total # of residues\t" + str(disordered_interface_size))
 print("Structured interface total # of residues\t" + str(structured_interface_size))
-# print("Total interface # of residues\t" + str(total_interface_size))
 print("Total number of proteins considered\t" + str(total_protein_count))

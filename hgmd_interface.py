@@ -28,22 +28,22 @@ def range_to_set2(r):
 
 
 # read interface data file and construct mapping from UniProt ID to set containing locations of interface regions
-with open("../Interface Data/ires_perppi_humanonly.txt") as idataf:
+with open("../Interface Data/hSIN_organized.txt") as idataf:
     idata = [x.split() for x in idataf.readlines() if x[:8] != "UniProtA"]
 uniprot_interface = {}
 for x in idata:
     uniprotid_a = x[0]
     uniprotid_b = x[1]
-    iregion_a = x[6]
-    iregion_b = x[7]
+    iregion_a = x[3]
+    iregion_b = x[5]
     if uniprotid_a in uniprot_interface:
-        uniprot_interface[uniprotid_a].update(range_to_set(iregion_a))
+        uniprot_interface[uniprotid_a].update(range_to_set2(iregion_a))
     else:
-        uniprot_interface[uniprotid_a] = range_to_set(iregion_a)
+        uniprot_interface[uniprotid_a] = range_to_set2(iregion_a)
     if uniprotid_b in uniprot_interface:
-        uniprot_interface[uniprotid_b].update(range_to_set(iregion_b))
+        uniprot_interface[uniprotid_b].update(range_to_set2(iregion_b))
     else:
-        uniprot_interface[uniprotid_b] = range_to_set(iregion_b)
+        uniprot_interface[uniprotid_b] = range_to_set2(iregion_b)
 
 # Read disorder region data file and construct mapping from UniProt ID to set containing locations of disordered
 # regions. Include experimental and predicted data.
@@ -51,7 +51,7 @@ with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
         xl = x.split()
-        if xl[0] != "Source" and xl[0] == "DisProt":
+        if xl[0] != "Source":  # and xl[7] == "Exp":# and xl[0] == "DisProt":
             ddata.append(xl)
 uniprot_disorder = {}
 for x in ddata:
@@ -88,19 +88,15 @@ for x in mutdata:
 # count total number of residues in each category
 disordered_interface_size = 0
 structured_interface_size = 0
-total_interface_size = 0
 total_protein_count = 0
 for x in uniprot_interface:
     if x in uniprot_disorder and x in mut_uniprot:
         disordered_interface_size += len(uniprot_interface[x].intersection(uniprot_disorder[x]))
         structured_interface_size += len(uniprot_interface[x].difference(uniprot_disorder[x]))
-        total_interface_size += len(uniprot_interface[x])
         total_protein_count += 1
 
-print("HGMD substitution mutations in disordered interface: " + str(in_disordered_interface))
-print("HGMD substitution mutations in structured interface: " + str(in_structured_interface))
-print("Total HGMD substitution mutations: " + str(in_disordered_interface + in_structured_interface))
-print("Disordered interface total # of residues: " + str(disordered_interface_size))
-print("Structured interface total # of residues: " + str(structured_interface_size))
-print("Total interface # of residues: " + str(total_interface_size))
-print("Total number of proteins considered: " + str(total_protein_count))
+print("HGMD substitution mutations in disordered interface\t" + str(in_disordered_interface))
+print("HGMD substitution mutations in structured interface\t" + str(in_structured_interface))
+print("Disordered interface total # of residues\t" + str(disordered_interface_size))
+print("Structured interface total # of residues\t" + str(structured_interface_size))
+print("Total number of proteins considered\t" + str(total_protein_count))
