@@ -36,7 +36,7 @@ def query(a, b):
 # Divide up task between threads evenly based on number of threads specified at top of file.
 threads = []
 for a in range(num_threads):
-    start = a * len(ids) // num_threads
+    start = a * (len(ids) // num_threads)
     if a == num_threads-1:
         end = len(ids)
     else:
