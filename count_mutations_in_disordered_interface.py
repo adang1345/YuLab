@@ -54,7 +54,7 @@ for x in idata:
         uniprot_interface[uniprotid_b] = range_to_set(iregion_b)
 
 # Read disorder region data file and construct mapping from UniProt ID to set containing locations of disordered
-# regions. Include experimental and predicted data.
+# regions. Type of data included depends on user input.
 with open("../Disordered Region Data/DisorderData.txt") as ddataf:
     ddata = []
     for x in ddataf.readlines():
@@ -68,6 +68,8 @@ with open("../Disordered Region Data/DisorderData.txt") as ddataf:
         elif disorder_type == "All":
             if xl[0] != "Source":
                 ddata.append(xl)
+        else:
+            assert False, "Incorrect disorder type indicated"
 uniprot_disorder = {}
 for x in ddata:
     uniprot = x[1]
@@ -86,7 +88,7 @@ with open(mutation_filepath) as mutf:
 # count number of mutations in each category
 in_disordered_interface = 0
 in_structured_interface = 0
-mut_uniprot = set()
+mut_uniprot = set()  #
 for x in mutdata:
     uniprot = x[1]
     # try:
@@ -95,10 +97,12 @@ for x in mutdata:
     #     continue
     if mut_location in uniprot_interface[uniprot]:
         if mut_location in uniprot_disorder[uniprot]:
+            print(x, "is in disordered interface")
             in_disordered_interface += 1
         else:
+            print(x, "is in structured interface")
             in_structured_interface += 1
-    mut_uniprot.add(uniprot)
+        mut_uniprot.add(uniprot)
 
 # count total number of residues in each category
 disordered_interface_size = 0
@@ -106,8 +110,15 @@ structured_interface_size = 0
 total_protein_count = 0
 for x in uniprot_interface:
     if x in uniprot_disorder and x in mut_uniprot:
-        disordered_interface_size += len(uniprot_interface[x].intersection(uniprot_disorder[x]))
-        structured_interface_size += len(uniprot_interface[x].difference(uniprot_disorder[x]))
+        print(x, "has interface", uniprot_interface[x])
+        print(x, "has disorder", uniprot_disorder[x])
+        print(x, "has disordered interface", uniprot_interface[x].intersection(uniprot_disorder[x]))
+        print(x, "has structured interface", uniprot_interface[x].difference(uniprot_disorder[x]))
+        disordered_interface_residues = uniprot_interface[x].intersection(uniprot_disorder[x])
+        disordered_interface_size += len(disordered_interface_residues)
+        structured_interface_residues = uniprot_interface[x].difference(uniprot_disorder[x])
+        structured_interface_size += len(structured_interface_residues)
+        assert disordered_interface_residues.intersection(structured_interface_residues) == set()
         total_protein_count += 1
 
 print("Mutations in disordered interface\t" + str(in_disordered_interface))

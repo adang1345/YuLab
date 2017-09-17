@@ -4,7 +4,7 @@ import common_tools
 import random
 import os
 
-NUM_MUTATIONS = 4000000
+NUM_MUTATIONS = 10_000_000
 OUTPUT = "../Mutation Control/Random.txt"
 
 uniprot_all = list(x[:x.index(".")] for x in os.listdir("../UniProt Sequences"))  # list of all UniProt IDs
