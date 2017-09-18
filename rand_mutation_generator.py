@@ -13,16 +13,21 @@ uniprot2seq = common_tools.uniprot2seq(uniprot_all)  # map from UniProt ID to pr
 
 print("begin generating random mutations")
 
+# generate sample set of all (uniprot id, mutation position) pairs
+uniprot_position_sampleset = []
+for uniprotid in uniprot2seq:
+    positions = range(1, len(uniprot2seq[uniprotid]))
+    uniprot_position_sampleset.extend((uniprotid, position) for position in positions)
+
 rand_mutations = set()  # set of (UniProt ID, mutation) tuples
 while len(rand_mutations) < NUM_MUTATIONS:
-    uniprotid = random.choice(uniprot_all)
+    uniprotid, mut_position = random.choice(uniprot_position_sampleset)
 
     # generate mutation from the UniProt ID
     try:
         seq = uniprot2seq[uniprotid]
     except KeyError:
         continue
-    mut_position = random.randint(1, len(seq)-1)
     mut_from = seq[mut_position]
     mut_to = mut_from
     while mut_to == mut_from:

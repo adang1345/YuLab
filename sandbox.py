@@ -4,7 +4,7 @@ import common_tools
 import random
 import os
 
-NUM_MUTATIONS = 10_000
+NUM_MUTATIONS = 20_000
 OUTPUT = "../Mutation Control/RandomInterface.txt"
 
 
@@ -59,8 +59,6 @@ for x in ddata:
     uniprot = x[1]
     dregion = x[5]
     uniprot_disorder[uniprot] = range_to_set(dregion)
-
-
 
 uniprot_all = list(x[:x.index(".")] for x in os.listdir("../UniProt Sequences"))  # list of all UniProt IDs
 amino_acids = list(common_tools.amino_acid_abbrev.values())  # list of all 1-letter amino acid abbreviations

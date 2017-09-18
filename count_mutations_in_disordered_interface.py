@@ -9,8 +9,6 @@ path the to file containing the mutations
 type of disordered region to consider, must be "All", "Exp", or "DisProt"
 """
 
-# TODO create file containing list of each thing mentioned in results, to debug
-
 import sys
 import os
 
@@ -97,10 +95,8 @@ for x in mutdata:
     #     continue
     if mut_location in uniprot_interface[uniprot]:
         if mut_location in uniprot_disorder[uniprot]:
-            print(x, "is in disordered interface")
             in_disordered_interface += 1
         else:
-            print(x, "is in structured interface")
             in_structured_interface += 1
         mut_uniprot.add(uniprot)
 
@@ -110,10 +106,6 @@ structured_interface_size = 0
 total_protein_count = 0
 for x in uniprot_interface:
     if x in uniprot_disorder and x in mut_uniprot:
-        print(x, "has interface", uniprot_interface[x])
-        print(x, "has disorder", uniprot_disorder[x])
-        print(x, "has disordered interface", uniprot_interface[x].intersection(uniprot_disorder[x]))
-        print(x, "has structured interface", uniprot_interface[x].difference(uniprot_disorder[x]))
         disordered_interface_residues = uniprot_interface[x].intersection(uniprot_disorder[x])
         disordered_interface_size += len(disordered_interface_residues)
         structured_interface_residues = uniprot_interface[x].difference(uniprot_disorder[x])
