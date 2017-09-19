@@ -1,10 +1,11 @@
 """Common functions and constants to be reused in multiple scripts."""
 
+import os
+
 
 amino_acid_abbrev = {'Cys':'C', 'Asp':'D', 'Ser':'S', 'Gln':'Q', 'Lys':'K', 'Ile':'I', 'Pro':'P', 'Thr':'T', 'Phe':'F',
                      'Asn':'N', 'Gly':'G', 'His':'H', 'Leu':'L', 'Arg':'R', 'Trp':'W', 'Ala':'A', 'Val':'V', 'Glu':'E',
                      'Tyr':'Y', 'Met':'M'}
-
 
 def mutation_abbrev(m):
     """Given mutation m as a string that has 3-letter amino acid abbreviations, return the mutation using 1-letter
@@ -34,6 +35,13 @@ def uniprot2seq(uniprots):
         except (FileNotFoundError, ValueError):
             pass
     return uniprot_seq
+
+
+def uniprot2seq_all():
+    """Return a dictionary that maps each UniProtID in ../UniProt Sequences/ to its sequence, prepended with ">".
+    If a file does not contain a valid FASTA sequence, then ignore it."""
+    uniprots = [x[:x.index(".")] for x in os.listdir("../UniProt Sequences")]
+    return uniprot2seq(uniprots)
 
 
 def head(filepath, n, start=0):

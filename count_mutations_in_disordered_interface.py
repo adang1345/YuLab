@@ -98,7 +98,7 @@ for x in mutdata:
             in_disordered_interface += 1
         else:
             in_structured_interface += 1
-        mut_uniprot.add(uniprot)
+    mut_uniprot.add(uniprot)
 
 # count total number of residues in each category
 disordered_interface_size = 0
@@ -110,7 +110,6 @@ for x in uniprot_interface:
         disordered_interface_size += len(disordered_interface_residues)
         structured_interface_residues = uniprot_interface[x].difference(uniprot_disorder[x])
         structured_interface_size += len(structured_interface_residues)
-        assert disordered_interface_residues.intersection(structured_interface_residues) == set()
         total_protein_count += 1
 
 print("Mutations in disordered interface\t" + str(in_disordered_interface))
