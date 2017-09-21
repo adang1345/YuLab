@@ -36,6 +36,7 @@ for line in mutation_file:
     if line == "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n":
         break
 
+fwrite.write("GeneName\tUniProtID\tMutationID\tProteinMutation\n")
 # i = 0
 consequences = set()
 for line in mutation_file:
@@ -49,7 +50,18 @@ for line in mutation_file:
     for m in mutations:
         assert len(m) == num_columns, m
         consequence = m[consequence_index]
-        consequences.add(consequence)
+        genename = m[genename_index]
+        uniprot = m[uniprot_index]
+        protmutation = m[protmutation_index]
+
+        # skip mutations that are not missense or contain missing information
+        if "missense_variant" not in consequence or uniprot == "" or protmutation == "":
+            continue
+
+        if genename == "":
+            genename = "-"
+        fwrite.write("\t".join((genename, uniprot, "-", hgvsp2standard(protmutation))))
+        fwrite.write("\n")
 
 
     # print(mutations)
